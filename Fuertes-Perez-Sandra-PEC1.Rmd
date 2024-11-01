@@ -25,7 +25,20 @@ Fork del repositorio de GitHub.
 
 Instalar paquete metabolomicsWorkbenchR.
 
+Se ha escogido el database "2023-CIMCBTutorial". Samples: 140 Features:
+149 Description: NMR data from a gastric cancer study used in a
+metabolomics data analysis tutorial ("Basic Metabolomics Data Analysis
+Workflow"
+(<https://cimcb.github.io/MetabWorkflowTutorial/Tutorial1.html>)
+
 \*metaRbolomics (paquete de analisis de datos de metabolomica).
+
+```{r, results=FALSE, message=FALSE, warning=FALSE}
+# Descarga de los datos directamente del repositorio de GitHub en el directorio de trabajo
+url <- "https://github.com/Chirimoyia/metaboData/tree/main/Datasets/2023-CIMCBTutorial"
+download.file(url, destfile = "GastricCancer_NMR.xlsx")
+download.file(url, destfile = "description.md")
+```
 
 2.  Una vez descargados los datos cread un contenedor del tipo
     SummarizedExperiment que contenga los datos y los metadatos
@@ -45,12 +58,16 @@ Instalar paquete metabolomicsWorkbenchR.
     APELLIDO1-Apellido2-Nombre-PEC1. Por ejemplo, en mi caso el
     repositorio se llamaría: “Sanchez-Pla-Alex-PEC1”
 
-5.  Cread un repositorio de github2 que contenga o el informe, o el
-    objeto contenedor con los datos y los metadatos en formato binario
-    (.Rda), o el código R para la exploración de los datos o los datos
-    en formato texto y o los metadatos acerca del dataset en un archivo
-    markdown. La dirección (url) del repositorio deberá estar incluida
-    en la última sección del informe de forma clara. Observad que, para
-    entregar vuestra PEC tenéis que entregar únicamente el informe. El
-    resto de entregables de vuestra PEC deberán quedar en el repositorio
-    de github.
+5.  Cread un repositorio de github que contenga
+
+-   el informe
+-   el objeto contenedor con los datos y los metadatos en formato
+    binario (.Rda)
+-   el código R para la exploración de los datos
+-   los datos en formato texto
+-   los metadatos acerca del dataset en un archivo markdown.
+
+La dirección (url) del repositorio deberá estar incluida en la última
+sección del informe de forma clara. Observad que, para entregar vuestra
+PEC tenéis que entregar únicamente el informe. El resto de entregables
+de vuestra PEC deberán quedar en el repositorio de github.
