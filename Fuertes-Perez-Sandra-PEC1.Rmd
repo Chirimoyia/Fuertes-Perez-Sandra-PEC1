@@ -35,9 +35,10 @@ Workflow"
 
 ```{r, results=FALSE, message=FALSE, warning=FALSE}
 # Descarga de los datos directamente del repositorio de GitHub en el directorio de trabajo
-url <- "https://github.com/Chirimoyia/metaboData/tree/main/Datasets/2023-CIMCBTutorial"
-download.file(url, destfile = "GastricCancer_NMR.xlsx")
-download.file(url, destfile = "description.md")
+xlsx_file <- "https://raw.githubusercontent.com/nutrimetabolomics/metaboData/main/Datasets/2023-CIMCBTutorial/GastricCancer_NMR.xlsx"
+description_file <- "https://raw.githubusercontent.com/nutrimetabolomics/metaboData/main/Datasets/2023-CIMCBTutorial/description.md"
+download.file(xlsx_file, destfile = "GastricCancer_NMR.xlsx", mode="wb")
+download.file(description_file, destfile = "description.md")
 ```
 
 2.  Una vez descargados los datos cread un contenedor del tipo
@@ -46,6 +47,17 @@ download.file(url, destfile = "description.md")
     SummarizedExperiment es una extensión de ExpressionSet y muchas
     aplicaciones o bases de datos (como metabolomicsWorkbench) lo
     utilizan en vez de usar expressionSet.
+    
+```{r}
+library(POMA)
+library(ggtext)
+library(magrittr)
+```
+
+```{r}
+main_data <- readxl::read_excel("GastricCancer_NMR.xlsx")
+peak_data <- readxl::read_excel("GastricCancer_NMR.xlsx", sheet="Peak")
+```
 
 3.  Llevad a cabo una exploración del dataset que os proporcione una
     visión general del mismo en la línea de lo que hemos visto en las
