@@ -1,0 +1,56 @@
+---
+title: "Fuertes-Perez-Sandra-PEC1"
+author: "Sandra Fuertes Perez"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+En concreto lo que tendréis que hacer es:
+
+1.  Seleccionar un dataset de metabolómica que podéis obtener de
+
+-   Este repositorio de github:
+    <https://github.com/nutrimetabolomics/metaboData/>
+-   Si lo preferís podéis usar algún dataset del repositorio
+    metabolomicsWorkbench
+
+Fork del repositorio de GitHub.
+
+Instalar paquete metabolomicsWorkbenchR.
+
+\*metaRbolomics (paquete de analisis de datos de metabolomica).
+
+2.  Una vez descargados los datos cread un contenedor del tipo
+    SummarizedExperiment que contenga los datos y los metadatos
+    (información acerca del dataset, las filas y las columnas). La clase
+    SummarizedExperiment es una extensión de ExpressionSet y muchas
+    aplicaciones o bases de datos (como metabolomicsWorkbench) lo
+    utilizan en vez de usar expressionSet.
+
+3.  Llevad a cabo una exploración del dataset que os proporcione una
+    visión general del mismo en la línea de lo que hemos visto en las
+    actividades
+
+4.  Elaborad un informe que describa el proceso que habéis realizado,
+    incluyendo la descarga de los datos, la creación del contenedor, la
+    exploración de los datos y la reposición de los datos en github. El
+    nombre del repositorio tiene que ser el siguiente:
+    APELLIDO1-Apellido2-Nombre-PEC1. Por ejemplo, en mi caso el
+    repositorio se llamaría: “Sanchez-Pla-Alex-PEC1”
+
+5.  Cread un repositorio de github2 que contenga o el informe, o el
+    objeto contenedor con los datos y los metadatos en formato binario
+    (.Rda), o el código R para la exploración de los datos o los datos
+    en formato texto y o los metadatos acerca del dataset en un archivo
+    markdown. La dirección (url) del repositorio deberá estar incluida
+    en la última sección del informe de forma clara. Observad que, para
+    entregar vuestra PEC tenéis que entregar únicamente el informe. El
+    resto de entregables de vuestra PEC deberán quedar en el repositorio
+    de github.
