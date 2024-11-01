@@ -49,14 +49,34 @@ download.file(description_file, destfile = "description.md")
     utilizan en vez de usar expressionSet.
     
 ```{r}
-library(POMA)
-library(ggtext)
-library(magrittr)
+library(SummarizedExperiment)
 ```
 
 ```{r}
 main_data <- readxl::read_excel("GastricCancer_NMR.xlsx")
 peak_data <- readxl::read_excel("GastricCancer_NMR.xlsx", sheet="Peak")
+
+data_matrix <- t(main_data[,c(5:ncol(main_data))])
+colnames(data_matrix) <- c(main_data$SampleID)
+coldata <- main_data[,2:4]
+rowdata <- peak_data[,2:ncol(peak_data)]
+
+se <- SummarizedExperiment(assays=list(metabolites=data_matrix), colData=coldata, rowData=rowdata)
+
+metadata(se) <- list(database_name = "2023-CIMCBTutorial",
+                     description = "NMR data from a gastric cancer study used in a metabolomics data analysis tutorial ('Basic Metabolomics Data Analysis Workflow' (https://cimcb.github.io/MetabWorkflowTutorial/Tutorial1.html)",
+                     publication_title = "1H-NMR urinary metabolomic profiling for diagnosis of gastric cancer",
+                     authors = "Chan, A., Mercier, P., Schiller, D. et al.",
+                     publication_DOI = "https://doi.org/10.1038/bjc.2015.414",
+                     journal = "British Journal of Cancer",
+                     issue = "114",
+                     pages = "59-62",
+                     year = "2016",
+                     annotated_data_file = "Metabolomics Workbench data repository Project ID PR000699",
+                     project_DOI = "10.21228/M8B10B",
+                     centre = "Canada's National High Field Nuclear Magnetic Resonance Centre (NANUC)",
+                     equipment = "600 MHz Varian Inova spectrometer",
+                     notes = "Raw NMR data unavailable")
 ```
 
 3.  Llevad a cabo una exploración del dataset que os proporcione una
@@ -78,6 +98,27 @@ peak_data <- readxl::read_excel("GastricCancer_NMR.xlsx", sheet="Peak")
 -   el código R para la exploración de los datos
 -   los datos en formato texto
 -   los metadatos acerca del dataset en un archivo markdown.
+
+```{r}
+save(se, file = "summarized_experiment.rda")
+write.csv(data_matrix, file="data.csv")
+write.csv(coldata, file="colData.csv")
+write.csv(rowdata, file="rowData.csv")
+```
+
+```{r}
+cat(paste(metadata(se), collapse="\n"), file="metadata.md")
+```
+
+```{r}
+metadata <- c()
+for (name in names(metadata(se))) {
+  metadata <- append(metadata, cat(name, ": ", metadata(se)[[name]], "\n"))
+}
+metadata
+#cat(paste(metadata, collapse="\n"), file="metadata.md")
+```
+
 
 La dirección (url) del repositorio deberá estar incluida en la última
 sección del informe de forma clara. Observad que, para entregar vuestra
