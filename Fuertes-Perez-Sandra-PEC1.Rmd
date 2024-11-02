@@ -12,18 +12,12 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-En concreto lo que tendréis que hacer es:
-
-1.  Seleccionar un dataset de metabolómica que podéis obtener de
+**1.** Seleccionar un dataset de metabolómica que podéis obtener de
 
 -   Este repositorio de github:
     <https://github.com/nutrimetabolomics/metaboData/>
 -   Si lo preferís podéis usar algún dataset del repositorio
     metabolomicsWorkbench
-
-Fork del repositorio de GitHub.
-
-Instalar paquete metabolomicsWorkbenchR.
 
 Se ha escogido el database "2023-CIMCBTutorial". Samples: 140 Features:
 149 Description: NMR data from a gastric cancer study used in a
@@ -31,39 +25,92 @@ metabolomics data analysis tutorial ("Basic Metabolomics Data Analysis
 Workflow"
 (<https://cimcb.github.io/MetabWorkflowTutorial/Tutorial1.html>)
 
-\*metaRbolomics (paquete de analisis de datos de metabolomica).
+Se ha creado inicialmente un repositorio en GitHub dedicado a almacenar
+todos los archivos de trabajo de la PEC1. Además, se ha descargado dicho
+repositorio para trabajar de forma local desde RStudio.
+
+Para la obtencion de los datos a utilizar, se ha ejecutado el siguiente
+codigo para la descarga directa del archivo excel, que contiene todos
+los datos, y el archivo ".md", que contiene la descripcion del estudio.
+Los datos se descargan en el directorio de trabajo, que en este caso es
+el que alberga al repositorio de la PEC1.
+
+\*Nota. La descarga utilizando la URL en la barra del navegador generaba
+archivos vacios o con el contenido HTML. En su lugar, se utilizan las
+URL "raw" para acceder al contenido de los archivos.
 
 ```{r, results=FALSE, message=FALSE, warning=FALSE}
+
 # Descarga de los datos directamente del repositorio de GitHub en el directorio de trabajo
 xlsx_file <- "https://raw.githubusercontent.com/nutrimetabolomics/metaboData/main/Datasets/2023-CIMCBTutorial/GastricCancer_NMR.xlsx"
 description_file <- "https://raw.githubusercontent.com/nutrimetabolomics/metaboData/main/Datasets/2023-CIMCBTutorial/description.md"
+
 download.file(xlsx_file, destfile = "GastricCancer_NMR.xlsx", mode="wb")
 download.file(description_file, destfile = "description.md")
 ```
 
-2.  Una vez descargados los datos cread un contenedor del tipo
-    SummarizedExperiment que contenga los datos y los metadatos
-    (información acerca del dataset, las filas y las columnas). La clase
-    SummarizedExperiment es una extensión de ExpressionSet y muchas
-    aplicaciones o bases de datos (como metabolomicsWorkbench) lo
-    utilizan en vez de usar expressionSet.
-    
-```{r}
+**2.** Una vez descargados los datos cread un contenedor del tipo
+SummarizedExperiment que contenga los datos y los metadatos (información
+acerca del dataset, las filas y las columnas). La clase
+SummarizedExperiment es una extensión de ExpressionSet y muchas
+aplicaciones o bases de datos (como metabolomicsWorkbench) lo utilizan
+en vez de usar expressionSet.
+
+Para utilizar la clase <SummarizedExperiment>, cargamos la libreria
+previamente instalada del mismo nombre, contenida en Bioconductor. 
+
+```{r, results=FALSE, message=FALSE, warning=FALSE}
+# carga de libreria
 library(SummarizedExperiment)
 ```
 
+Los datos numericos los cargamos de las dos pestañas disponibles en el
+archivo excel <GastricCancer_NMR.xlsx>. Utilizamos la funcion <read_excel()> del paquete <readxl>.
+
 ```{r}
+# carga de datos del archivo excel
 main_data <- readxl::read_excel("GastricCancer_NMR.xlsx")
 peak_data <- readxl::read_excel("GastricCancer_NMR.xlsx", sheet="Peak")
+```
 
+Para generar nuestro objeto <SummarizedExperiment> necesitamos un total de 3 matrices, una para los datos de muestras y variables, una para la informacion sobre las columnas, y una para la informacion sobre las filas. 
+
+La principal matriz de datos en este caso estará compuesta por 140 muestras, que estaran distribuidas en las columnas, y 149 variables, o en este caso metabolitos medidos, que se distribuiran en las filas. Estos datos podemos obtenerlos de la matriz <main_data>, extrayendo todas las filas, y las columnas 5 a 153 (metabolitos M1-M149). Además, transpondremos filas y columnas para dejar las "probes" o variables medidas como filas, y las muestras como columnas. Nuestra matriz de datos es <data_matrix>.
+
+```{r}
 data_matrix <- t(main_data[,c(5:ncol(main_data))])
 colnames(data_matrix) <- c(main_data$SampleID)
+```
+
+La matriz que contiene la informacion sobre las columnas (<coldata>), es decir, las muestras, podemos obtenerlo tambien de la matriz <main_data>, de las columnas iniciales, con informacion sobre el ID de la muestra, el tipo de muestra (quality control QC o muestra de estudio) y la clase, que indica el resultado clinico observado (GC = cancer gastrico, BN = tumor benigno, HE = control sano). Asi, podemos extraer dicha informacion de las columnas 2 a 4. En esta nueva matriz, las filas contienen las muestas, y las columnas las variables descriptivas de las mismas.
+
+Realizamos un paso similar para la matriz de informacion de las filas (<rowdata>), pero en este caso extraemos los datos de la matriz <peak_data>. Obtenemos los metabolitos como filas, y en las columnas los descriptores, incluyendo el nombre unico del metabolito (Label), porcentaje de muestras sin medida para este metabolito o NAs (Perc_missing), y una puntuacion de calidad que representa la variacion asociada a la cuantificacion del metabolito en las muestras (QC_RSD).
+
+```{r}
+# creamos metadatos para filas y columnas
 coldata <- main_data[,2:4]
 rowdata <- peak_data[,2:ncol(peak_data)]
+```
 
+Creamos el objeto <SummarizedExperiment> proveyendo a la funcion con la matriz de datos, y las dos matrices de metadatos para filas y columnas.
+
+```{r}
+# creamos SummarizedExperiment object
 se <- SummarizedExperiment(assays=list(metabolites=data_matrix), colData=coldata, rowData=rowdata)
+```
 
-metadata(se) <- list(database_name = "2023-CIMCBTutorial",
+Los metadatos sobre el estudio estan contenidos en el archivo <description.md>. Junto con informacion que se puede obtener de la publicacion, podemos rellenar una serie de campos explicativos sobre el estudio y la procedencia de los datos, y almacenarlos en el campo <metadata> del objecto <SummarizedExperiment>. Ademas, podemos tambien incluir informacion sobre los valores de las variables.
+
+```{r, results=FALSE, message=FALSE, warning=FALSE}
+# extremos el contenido del archivo 'description.md'
+raw_description = paste(readLines("description.md"), sep='\n')
+
+# creamos el campo metadata del objeto se
+metadata(se) <- list(raw_description = raw_description,
+                     data = "Quantification of 149 metabolites (M1-M149) in 140 patient samples",
+                     coldata = "SampleID, SampleType (quality control QC or patient sample Sample), Class (GC = Gastric Cancer, BN = Benign Tumor, HE = Healthy Control)",
+                     rowdata = "Name (column header of metabolite), Label (unique name for metabolite), Perc_missing (percentage of NAs per metabolite), QC_RSD (quality score)",
+                     database_name = "2023-CIMCBTutorial",
                      description = "NMR data from a gastric cancer study used in a metabolomics data analysis tutorial ('Basic Metabolomics Data Analysis Workflow' (https://cimcb.github.io/MetabWorkflowTutorial/Tutorial1.html)",
                      publication_title = "1H-NMR urinary metabolomic profiling for diagnosis of gastric cancer",
                      authors = "Chan, A., Mercier, P., Schiller, D. et al.",
@@ -77,6 +124,30 @@ metadata(se) <- list(database_name = "2023-CIMCBTutorial",
                      centre = "Canada's National High Field Nuclear Magnetic Resonance Centre (NANUC)",
                      equipment = "600 MHz Varian Inova spectrometer",
                      notes = "Raw NMR data unavailable")
+```
+
+Los datos distribuidos en las tres matrices/dataframes se guardan como archivos de texto <.csv>. El objeto SummarizedExperiment se guarda entero junto con todos sus campos como un archivo <.rda>.
+
+```{r}
+save(se, file = "summarized_experiment.rda")
+write.csv(data_matrix, file="data.csv")
+write.csv(coldata, file="colData.csv")
+write.csv(rowdata, file="rowData.csv")
+```
+
+Los metadatos del archivo se guardaran en un archivo markdown.
+
+```{r}
+cat(paste(metadata(se), collapse="\n"), file="metadata.md")
+```
+
+```{r}
+metadata <- c()
+for (name in names(metadata(se))) {
+  metadata <- append(metadata, cat(name, ": ", metadata(se)[[name]], "\n"))
+}
+metadata
+#cat(paste(metadata, collapse="\n"), file="metadata.md")
 ```
 
 3.  Llevad a cabo una exploración del dataset que os proporcione una
@@ -94,30 +165,13 @@ metadata(se) <- list(database_name = "2023-CIMCBTutorial",
 
 -   el informe
 -   el objeto contenedor con los datos y los metadatos en formato
-    binario (.Rda)
+    binario (.Rda) ++
 -   el código R para la exploración de los datos
--   los datos en formato texto
+-   los datos en formato texto ++
 -   los metadatos acerca del dataset en un archivo markdown.
 
-```{r}
-save(se, file = "summarized_experiment.rda")
-write.csv(data_matrix, file="data.csv")
-write.csv(coldata, file="colData.csv")
-write.csv(rowdata, file="rowData.csv")
-```
 
-```{r}
-cat(paste(metadata(se), collapse="\n"), file="metadata.md")
-```
 
-```{r}
-metadata <- c()
-for (name in names(metadata(se))) {
-  metadata <- append(metadata, cat(name, ": ", metadata(se)[[name]], "\n"))
-}
-metadata
-#cat(paste(metadata, collapse="\n"), file="metadata.md")
-```
 
 
 La dirección (url) del repositorio deberá estar incluida en la última
