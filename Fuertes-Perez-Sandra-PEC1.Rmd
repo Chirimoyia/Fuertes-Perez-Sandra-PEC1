@@ -2,7 +2,9 @@
 title: "Fuertes-Perez-Sandra-PEC1"
 author: "Sandra Fuertes Perez"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  pdf_document:
+    latex_engine: xelatex
 editor_options: 
   markdown: 
     wrap: 72
@@ -12,13 +14,6 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r, results=FALSE, message=FALSE, warning=FALSE}
-if (!require(BiocManager)) install.packages("BiocManager", dep=TRUE)
-if (!require(SummarizedExperiment)) BiocManager::install("SummarizedExperiment")
-if (!require(POMA)) BiocManager::install("POMA")
-if (!require(magrittr)) install.packages("magrittr")
-```
-
 **1.** Seleccionar un dataset de metabolómica que podéis obtener de
 
 -   Este repositorio de github:
@@ -26,8 +21,78 @@ if (!require(magrittr)) install.packages("magrittr")
 -   Si lo preferís podéis usar algún dataset del repositorio
     metabolomicsWorkbench
 
-Se ha escogido el database "2023-CIMCBTutorial". Samples: 140 Features:
-149 Description: NMR data from a gastric cancer study used in a
+**2.** Una vez descargados los datos cread un contenedor del tipo
+SummarizedExperiment que contenga los datos y los metadatos (información
+acerca del dataset, las filas y las columnas). La clase
+SummarizedExperiment es una extensión de ExpressionSet y muchas
+aplicaciones o bases de datos (como metabolomicsWorkbench) lo utilizan
+en vez de usar expressionSet.
+
+**3.** Llevad a cabo una exploración del dataset que os proporcione una
+visión general del mismo en la línea de lo que hemos visto en las
+actividades
+
+**4.** Elaborad un informe que describa el proceso que habéis realizado,
+incluyendo la descarga de los datos, la creación del contenedor, la
+exploración de los datos y la reposición de los datos en github. El
+nombre del repositorio tiene que ser el siguiente:
+APELLIDO1-Apellido2-Nombre-PEC1. Por ejemplo, en mi caso el repositorio
+se llamaría: “Sanchez-Pla-Alex-PEC1”
+
+**5.** Cread un repositorio de github que contenga
+
+-   el informe
+-   el objeto contenedor con los datos y los metadatos en formato
+    binario (.Rda)
+-   el código R para la exploración de los datos
+-   los datos en formato texto
+-   los metadatos acerca del dataset en un archivo markdown
+
+La dirección (url) del repositorio deberá estar incluida en la última
+sección del informe de forma clara. Observad que, para entregar vuestra
+PEC tenéis que entregar únicamente el informe. El resto de entregables
+de vuestra PEC deberán quedar en el repositorio de github.
+
+////////////////////////////////////////////////////////////////////////////////
+
+# Estructura de los resultados
+
+La distribucion de los archivos es la siguiente: 
+
+- El archivo "README.md" contiene las instrucciones de la actividad
+
+- Este informe "Fuertes-Perez-Sandra-PEC1.pdf" contiene
+la explicacion del proceso llevado a cabo en el analisis exploratorio de
+los datos 
+
+- El archivo "Fuertes-Perez-Sandra-PEC1.Rmd consiste en el
+archivo markdown que ha generado este informe, y el codigo utilizado
+durante la actividad 
+
+- La carpeta RawData contiene los archivos con los
+datos a utilizar descargados del repositorio de github sin modificacion
+alguna 
+
+- Los archivos "data.csv", "colData.csv" y "rowData.csv"
+contienen los datos extraidos con los que se ha generado el objeto
+SummarizedExperiment (sin pre-procesar) 
+
+- El archivo "metadata.md"
+contiene los metadatos sobre el estudio 
+
+- El archivo
+"summarized_experiment.rda" contiene el objeto SummarizedExperiment
+creado (antes del pre-procesado)
+
+# Eleccion de dataset y descarga de datos
+
+Se ha escogido el database "2023-CIMCBTutorial". 
+
+Samples: 140 
+
+Features: 149 
+
+Description: NMR data from a gastric cancer study used in a
 metabolomics data analysis tutorial ("Basic Metabolomics Data Analysis
 Workflow"
 (<https://cimcb.github.io/MetabWorkflowTutorial/Tutorial1.html>)
@@ -39,15 +104,26 @@ repositorio para trabajar de forma local desde RStudio.
 Para la obtencion de los datos a utilizar, se ha ejecutado el siguiente
 codigo para la descarga directa del archivo excel, que contiene todos
 los datos, y el archivo ".md", que contiene la descripcion del estudio.
-Los datos se descargan en el directorio de trabajo, que en este caso es
+Los datos se descargan en el directorio *RawData* dentro del directorio de trabajo, que en este caso es
 el que alberga al repositorio de la PEC1.
 
-\*Nota. La descarga utilizando la URL en la barra del navegador generaba
+*Nota. La descarga utilizando la URL en la barra del navegador generaba
 archivos vacios o con el contenido HTML. En su lugar, se utilizan las
 URL "raw" para acceder al contenido de los archivos.
 
 ```{r, results=FALSE, message=FALSE, warning=FALSE}
+# instalacion de paquetes requeridos
+if (!require(BiocManager)) install.packages("BiocManager", dep=TRUE)
+if (!require(SummarizedExperiment)) BiocManager::install("SummarizedExperiment")
+if (!require(POMA)) BiocManager::install("POMA")
+if (!require(magrittr)) install.packages("magrittr")
+if (!require(ggtext)) install.packages("ggtext")
+if (!require(gplots)) install.packages("gplots")
+if (!require(dplyr)) install.packages("dplyr")
+if (!require(dplyr)) install.packages("readxl")
+```
 
+```{r, results=FALSE, message=FALSE, warning=FALSE}
 # url de cada archivo
 xlsx_file <- "https://raw.githubusercontent.com/nutrimetabolomics/metaboData/main/Datasets/2023-CIMCBTutorial/GastricCancer_NMR.xlsx"
 description_file <- "https://raw.githubusercontent.com/nutrimetabolomics/metaboData/main/Datasets/2023-CIMCBTutorial/description.md"
@@ -60,24 +136,9 @@ download.file(xlsx_file, destfile = "RawData/GastricCancer_NMR.xlsx", mode="wb")
 download.file(description_file, destfile = "RawData/description.md")
 ```
 
-**2.** Una vez descargados los datos cread un contenedor del tipo
-SummarizedExperiment que contenga los datos y los metadatos (información
-acerca del dataset, las filas y las columnas). La clase
-SummarizedExperiment es una extensión de ExpressionSet y muchas
-aplicaciones o bases de datos (como metabolomicsWorkbench) lo utilizan
-en vez de usar expressionSet.
-
-Para utilizar la clase <SummarizedExperiment>, cargamos la libreria
-previamente instalada del mismo nombre, contenida en Bioconductor.
-
-```{r, results=FALSE, message=FALSE, warning=FALSE}
-# carga de libreria
-library(SummarizedExperiment)
-```
-
 Los datos numericos los cargamos de las dos pestañas disponibles en el
-archivo excel \<GastricCancer_NMR.xlsx\>. Utilizamos la funcion
-\<read_excel()\> del paquete <readxl>.
+archivo excel *GastricCancer_NMR.xlsx*. Utilizamos la funcion
+*read_excel()* del paquete *readxl*.
 
 ```{r}
 # carga de datos del archivo excel
@@ -85,7 +146,17 @@ main_data <- readxl::read_excel("RawData/GastricCancer_NMR.xlsx")
 peak_data <- readxl::read_excel("RawData/GastricCancer_NMR.xlsx", sheet="Peak")
 ```
 
-Para generar nuestro objeto <SummarizedExperiment> necesitamos un total
+# Creacion de objeto SummarizedExperiment
+
+Para utilizar la clase *SummarizedExperiment*, cargamos la libreria
+previamente instalada del mismo nombre, contenida en Bioconductor.
+
+```{r, results=FALSE, message=FALSE, warning=FALSE}
+# carga de libreria
+library(SummarizedExperiment)
+```
+
+Para generar nuestro objeto *SummarizedExperiment* necesitamos un total
 de 3 matrices, una para los datos de muestras y variables, una para la
 informacion sobre las columnas, y una para la informacion sobre las
 filas.
@@ -93,19 +164,20 @@ filas.
 La principal matriz de datos en este caso estará compuesta por 140
 muestras, que estaran distribuidas en las columnas, y 149 variables, o
 en este caso metabolitos medidos, que se distribuiran en las filas.
-Estos datos podemos obtenerlos de la matriz <main_data>, extrayendo
+Estos datos podemos obtenerlos de la matriz *main_data*, extrayendo
 todas las filas, y las columnas 5 a 153 (metabolitos M1-M149). Además,
 transpondremos filas y columnas para dejar las "probes" o variables
 medidas como filas, y las muestras como columnas. Nuestra matriz de
-datos es <data_matrix>.
+datos es *data_matrix*.
 
 ```{r}
+# creamos nuestra matriz principal de datos
 data_matrix <- t(main_data[,c(5:ncol(main_data))])
-colnames(data_matrix) <- c(main_data$SampleID)
+colnames(data_matrix) <- main_data$SampleID
 ```
 
-La matriz que contiene la informacion sobre las columnas (<coldata>), es
-decir, las muestras, podemos obtenerlo tambien de la matriz <main_data>,
+La matriz que contiene la informacion sobre las columnas (*coldata*), es
+decir, las muestras, podemos obtenerlo tambien de la matriz *main_data*,
 de las columnas iniciales, con informacion sobre el ID de la muestra, el
 tipo de muestra (quality control QC o muestra de estudio) y la clase,
 que indica el resultado clinico observado (GC = cancer gastrico, BN =
@@ -115,20 +187,27 @@ contienen las muestas, y las columnas las variables descriptivas de las
 mismas.
 
 Realizamos un paso similar para la matriz de informacion de las filas
-(<rowdata>), pero en este caso extraemos los datos de la matriz
-<peak_data>. Obtenemos los metabolitos como filas, y en las columnas los
+(*rowdata*), pero en este caso extraemos los datos de la matriz
+*peak_data*. Obtenemos los metabolitos como filas, y en las columnas los
 descriptores, incluyendo el nombre unico del metabolito (Label),
 porcentaje de muestras sin medida para este metabolito o NAs
 (Perc_missing), y una puntuacion de calidad que representa la variacion
 asociada a la cuantificacion del metabolito en las muestras (QC_RSD).
 
-```{r}
+```{r, results=FALSE, message=FALSE, warning=FALSE}
 # creamos metadatos para filas y columnas
-coldata <- main_data[,2:4]
-rowdata <- peak_data[,2:ncol(peak_data)]
+rowdata <- peak_data[,3:ncol(peak_data)]
+rownames(rowdata) <- peak_data$Name
+coldata <- main_data[,3:4]
+
+# convertimos las variables "Class" y "SampleType" a factor
+coldata$Class <- factor(coldata$Class)
+coldata$SampleType <- factor(coldata$SampleType)
+
+rownames(coldata) <- main_data$SampleID
 ```
 
-Creamos el objeto <SummarizedExperiment> proveyendo a la funcion con la
+Creamos el objeto *SummarizedExperiment* proveyendo a la funcion con la
 matriz de datos, y las dos matrices de metadatos para filas y columnas.
 
 ```{r}
@@ -137,10 +216,10 @@ se <- SummarizedExperiment(assays=list(metabolites=data_matrix), colData=coldata
 ```
 
 Los metadatos sobre el estudio estan contenidos en el archivo
-\<description.md\>. Junto con informacion que se puede obtener de la
+*description.md*. Junto con informacion que se puede obtener de la
 publicacion, podemos rellenar una serie de campos explicativos sobre el
 estudio y la procedencia de los datos, y almacenarlos en el campo
-<metadata> del objecto <SummarizedExperiment>. Ademas, podemos tambien
+*metadata* del objecto *SummarizedExperiment*. Ademas, podemos tambien
 incluir informacion sobre los valores de las variables.
 
 ```{r, results=FALSE, message=FALSE, warning=FALSE}
@@ -167,22 +246,26 @@ metadata(se) <- list(raw_description = raw_description,
                      equipment = "600 MHz Varian Inova spectrometer")
 ```
 
+# Guardado de datos
+
 Los datos distribuidos en las tres matrices/dataframes se guardan como
-archivos de texto \<.csv\>. El objeto SummarizedExperiment se guarda
-entero junto con todos sus campos como un archivo \<.rda\>.
+archivos de texto *.csv*. El objeto SummarizedExperiment se guarda
+entero junto con todos sus campos como un archivo *.rda*.
 
 ```{r}
+# guardamos nuestros datos y el summarizedexperiment object
 save(se, file = "summarized_experiment.rda")
 write.csv(data_matrix, file="data.csv")
 write.csv(coldata, file="colData.csv")
 write.csv(rowdata, file="rowData.csv")
 ```
 
-Los metadatos del archivo se guardaran en un archivo markdown.\`Podemos
+Los metadatos del archivo se guardaran en un archivo markdown.Podemos
 extraer los metadatos con sus encabezados del objeto
-<SummarizedExperiment> y copiarlos en un archivo \<metadata.md\>.
+*SummarizedExperiment* y copiarlos en un archivo *metadata.md*.
 
 ```{r}
+# extraemos metadatos en un archivo .md
 metadata <- c("")
 for (name in names(metadata(se))) {
   metadata <- append(metadata, paste(c(paste(name, ':'), metadata(se)[[name]], '\n')))
@@ -191,45 +274,288 @@ for (name in names(metadata(se))) {
 cat(paste(metadata, collapse="\n"), file="metadata.md")
 ```
 
-3.  Llevad a cabo una exploración del dataset que os proporcione una
-    visión general del mismo en la línea de lo que hemos visto en las
-    actividades
-    
+# Exploracion del dataset
+
 ```{r}
+# cargamos librerias para la exploracion de datos
 library(POMA)
 library(magrittr)
+library(ggtext)
 ```
+
+En primer lugar, podemos llevar a cabo una exploracion simple, meramente
+de la distribucion de los datos.
+
+Observamos en la distribucion de los datos (valores minimo, maximo,
+media y mediana) que las escalas para cada metabolito no son, en muchos
+casos, comparables. Seria adecuado normalizar los valores antes de
+proceder con algun analisis.
 
 ```{r}
-se
-```
-# Pre-processing
+# con la funcion str() podemos visualizar la cantidad de datos contenidos en el objeto se
+str(se)
 
-## Missing Value Imputation
+# realizamos un resumen por filas (por metabolitos)
+head(apply(assay(se, i=1), 1, summary))
+```
+
+## Imputación de NAs
+
+Entre la informacion que podemos extraer del resumen, es que hay varios
+missing datapoint en la mayoria de los metabolitos de la base de datos.
+Si extraemos una tabla resumen del porcentaje de missing data contenidos
+en los metadatos de las filas (*rowData()*), observamos que para
+algunos metabolitos el porcentaje de datos perdidos supera el 30%.
 
 ```{r}
-imputed <- se %>% PomaImpute(method = "knn", zeros_as_na = TRUE, remove_na = TRUE, cutoff = 20)
-imputed
+# resumen del porcentaje de datos missing de los metabolitos
+summary(rowData(se)$Perc_missing)
 ```
-    
 
-4.  Elaborad un informe que describa el proceso que habéis realizado,
-    incluyendo la descarga de los datos, la creación del contenedor, la
-    exploración de los datos y la reposición de los datos en github. El
-    nombre del repositorio tiene que ser el siguiente:
-    APELLIDO1-Apellido2-Nombre-PEC1. Por ejemplo, en mi caso el
-    repositorio se llamaría: “Sanchez-Pla-Alex-PEC1”
+Un 20% de muestras sin valor para un metabolito se considera criterio
+suficiente para eliminarlo del analisis (Wei, Wang, Su, et al., 2018).
+Eliminamos los metabolitos que no cumplan dicho criterio e imputamos el
+resto. Hay que considerar que la funcion *PomaImpute()* no almacena el
+rowData del objeto original, de forma que debe ser manualmente añadido
+despues.
 
-5.  Cread un repositorio de github que contenga
+```{r}
+# guarda el rowData original
+se_rowdata <- rowData(se)
 
--   el informe +
--   el objeto contenedor con los datos y los metadatos en formato
-    binario (.Rda) ++
--   el código R para la exploración de los datos +
--   los datos en formato texto ++
--   los metadatos acerca del dataset en un archivo markdown. ++
+# elimina NAs por encima del cutoff e imputa el resto de datos
+se_imputed <- se[rowData(se)$Perc_missing <= 20]
+se_imputed <- se_imputed %>% PomaImpute(method="knn", zeros_as_na=TRUE, remove_na=FALSE)
 
-La dirección (url) del repositorio deberá estar incluida en la última
-sección del informe de forma clara. Observad que, para entregar vuestra
-PEC tenéis que entregar únicamente el informe. El resto de entregables
-de vuestra PEC deberán quedar en el repositorio de github.
+# integramos de nuevo el rowData en el nuevo objeto SE
+rowData(se_imputed) <- se_rowdata[rownames(se_imputed),]
+
+# resumen de la distribucion de NAs en el objeto
+summary(rowData(se_imputed)$Perc_missing)
+```
+
+Observamos que ya no hay missing data presentes en los datos.
+
+```{r}
+# resumen numerico de los 5 primeros metabolitos
+head(apply(assay(se_imputed[1:5,], i=1), 1, summary))
+```
+
+## Control de calidad
+
+Tambien podemos evaluar la puntuacion de calidad para cada metabolito
+contenida en los metadatos de las filas (*rowData*). La puntuacion esta
+basada en la desviacion estandar relativa (RSD), que establece si la
+desviacion estandar de cada metabolito es una cantidad pequeña o grande
+comparada con la media. Un criterio comun de aceptacion para el RSD es
+<20% (Sangster, 2016; Dunn, 2011b). En el resumen vemos que hay datos
+que pueden alcanzar un RSD de hasta 133. Podemos eliminar dichos
+metabolitos al no poder confiar en su cuantificacion.
+
+```{r}
+# resumen de la puntuacion de calidad de los metabolitos
+summary(rowData(se_imputed)$QC_RSD)
+
+# eliminar metabolitos con QC > 20
+se_quality <- se_imputed[rowData(se_imputed)$QC_RSD <= 20]
+
+# resumen de la puntuacion de calidad tras el filtrado
+summary(rowData(se_quality)$QC_RSD)
+```
+
+Tras todo el proceso de eliminacion de datos de poca calidad, mantenemos
+52 metabolitos.
+
+```{r}
+# dimension de la base de datos
+dim(se_quality)
+```
+
+## Normalizacion
+
+Aplicamos una normalizacion de los valores
+
+```{r}
+# normalizacion de los datos
+se_normalized <- se_quality %>% PomaNorm(method = "log_pareto")
+
+# integramos de nuevo el rowData en el nuevo objeto SE
+rowData(se_normalized) <- se_rowdata[rownames(se_normalized),]
+
+apply(assay(se_normalized[1:5,], i=1), 1, summary)
+```
+El paquete POMA pone a disposicion funciones para la visualizacion de
+los datos en formar de boxplots. Podemos representar el efecto de la
+normalizacion visualizando los datos antes y despues de llevarla a cabo.
+Nuestro datos estan ahora centrados alrededor de una media 0. Podemos
+observar la distribucion aparentemente aleatoria de los tipos de
+muestras, con la excepcion de la localizacion de las muestras de control
+de calidad en el centro, con poca variacion de valor como se esperaria,
+que indican consistencia. Las muestras antes de la normalizacion
+muestran signos de skewness, con valores para algunas de ellas muy
+extremos que, tras la normalizacion, son suavizados.
+
+```{r}
+# boxplots de las muestras antes y despues de la normalizacion
+library(ggplot2)
+
+# pre-normalizacion
+plot1 <- PomaBoxplots(se_quality, x="samples")
+plot1 + scale_x_discrete(breaks = function(x) x[seq(1, length(x), by = 5)]) + theme(axis.text.x = element_text(size = 6))
+
+# post-normalizacion
+plot2 <- PomaBoxplots(se_normalized, x="samples")
+plot2 + scale_x_discrete(breaks = function(x) x[seq(1, length(x), by = 5)]) + theme(axis.text.x = element_text(size = 6))
+```
+
+Tambien es posible observar las curvas de densidad de valores para las variables (metabolitos). Observamos una clara diferencia entre los valores con mayor densidad pre-normalizacion, agrupados en los valores bajos y, aunque no visibles, outliers muy extremos en valores altos. Por otra parte al normalizar los valores, observamos que los picos de casi todos los metabolitos se solapan. Uno de los picos parece de mayor altura que el resto. Podria indicar un feature dominante, o podria indicar la presentcia de outliers extremos en la medida de dicho metabolito.
+
+```{r}
+# creacion de curva de densidad de valores antes de la normalizacion
+plot1 <- PomaDensity(se_quality, x="features")
+plot1 + theme(
+  legend.text = element_text(size=8),
+  legend.key.size = unit(3, "mm")) + guides(fill=guide_legend(ncol=12))
+
+# creacion de curva de densidad de valores tras la normalizacion
+plot2 <- PomaDensity(se_normalized, x="features")
+plot2 + theme(
+  legend.text = element_text(size=8),
+  legend.key.size = unit(3, "mm")) + guides(fill=guide_legend(ncol=12))
+```
+Es posible extraer el indice del metabolito que crea el pico de mayor altura para poder estar atentos a él.
+
+```{r}
+# extraccion del pico de mayor altura
+library(dplyr)
+p <- plot2$data
+highest_peak_feature <- p %>%
+  group_by(name) %>%
+  summarize(max_density = max(value)) %>%
+  slice_max(max_density, n = 1) %>%
+  pull(name)
+
+highest_peak_feature
+cat("El metabolito que produce el pico de mayor altura que el resto es ", rowData(se)[highest_peak_feature,]$Label)
+```
+# Relacion y correlacion
+
+Con la libreria gplots es posible visualizar tanto los dendrogramas de muestras y features juntos, como la matriz de correlacion tanto de muestras como de features. Observamos que en la representacion de correlacion de las muestras, aquellas uqe pertenecen al control de calidad estan claramente diferenciadas del resto, lo cual es buena señal.
+
+```{r}
+# creacion de heatmaps para la relacion entre muestras y metabolitos, y la correlacion entre muestras, y entre metabolitos
+library(gplots)
+data_heatmap <- assay(se_normalized)
+rownames(data_heatmap) <- rowData(se_normalized)$Label
+colnames(data_heatmap) <- colData(se_normalized)$SampleType
+
+heatmap_result <- heatmap.2(data_heatmap, trace="none", dendrogram="both")
+heatmap_result <- heatmap.2(cor(data_heatmap), trace="none")
+heatmap_result <- heatmap.2(cor(t(data_heatmap)), trace="none")
+```
+
+## Outliers
+
+Con el siguiente codigo, tambien utilizando la libreria POMA, podemos eliminar y visualizar outliers en nuestros datos, donde vemos, de nuevo, que las muestras del control de calidad forman un cluster concentrado, indicando muy poca variabilidad. Tal y como se espera, la dispersion de las muestras es mucho mayor.
+
+```{r}
+# extract the summarizedexperiment object without ouliers
+se_outliers <- PomaOutliers(se_normalized)$data
+
+# represent outliers detection
+PomaOutliers(se_normalized)$polygon_plot
+```
+
+## PCA
+
+Podemos realizar un analisis de PCA de los datos. De nuevo, se agrupan en muestras de QC y biologicas. Las primeras deberian formar un cluster compacto comparadas con el resto de muestras.
+
+```{r}
+# perform PCA analysis of the data
+PCA <- PomaPCA(se_outliers)
+
+# extract eigenvalues
+PCA$eigenvalues
+
+# extract loadings and the most contributing features for each PC
+loadings <- PCA$loadings
+max_load_pc1 <- loadings[which.max(abs(loadings$PC1)),]$feature
+max_load_pc2 <- loadings[which.max(abs(loadings$PC2)),]$feature
+rowdata[c(max_load_pc1, max_load_pc2), 1]
+
+# distribucion de las muestras en el espacio de las dos primeras PCs
+PCA$factors_plot
+
+# peso de cada metabolito a cada PC
+PCA$loadings_plot
+```
+La componente principal contiene un 71% de la varianza, seguida de la segunda componente que engloba un 13% de la misma. Mas del 80% de la varianza esta explicada por las dos primeras componentes. Parece que los features que, de manera absoluta, tienen un peso mayor para las componentes primera y segunda son la creatinina y el citrato, respectivamente. La distribucion de las muestras en el plano de las dos primeras componentes muestra la dispersion de las muestras biologicas frente a la aglomeracion de las muestas control. Finalmente, el grafico de contribucion de cada metabolito muestra que las contribuciones de la mayoria de metabolitos a la primera componente son bastante similares, y es en el resto de componentes cuando parece que hay mayor variacion de la contribucion. Podria indicarse que no hay un unico metabolito que destaque en su contribucion a la mayoria de la variabilidad.
+
+# PCA entre muestras sanas y cancerosas
+
+Podemos repetir el proceso anterior pero unicamente considerando aquellas muestras que sean o bien de tejido sano, o bien de tejido canceroso. En este caso, la PC1 y PC2 tambien engloban la mayoria de la variabilidad, con un 74% perteneciendo a la primera. En la grafica de factores podemos ver que podria haber una cierta separacion entre las ambos tipos de muestras. En la grafica de contribuciones vemos que de nuevo hay una contribucion bastante similar de multiples metabolitos al mismo tiempo.
+
+```{r}
+# recuperamos el SummarizedExperiment
+se_HvC <- se[,colData(se)$Class %in% c("HE", "GC")]
+colData(se_HvC) <- colData(se_HvC)[,c("Class", "SampleType")]
+
+# imputacion de datos
+imputed <- se_HvC[rowData(se_HvC)$Perc_missing <= 20]
+imputed <- imputed %>% PomaImpute(method="knn", zeros_as_na=TRUE, remove_na=FALSE)
+rowData(imputed) <- se_rowdata[rownames(imputed),]
+
+# eliminacion de metabolitos de baja calidad
+quality <- imputed[rowData(imputed)$QC_RSD <= 20]
+
+# normalizacion
+normalized <- quality %>% PomaNorm(method = "log_pareto")
+rowData(normalized) <- se_rowdata[rownames(normalized),]
+
+# eliminacion de outliers
+outliers <- PomaOutliers(normalized)$data
+
+# analisis PCA en base a la clase de la muestra
+PCA <- PomaPCA(outliers)
+
+# extract eigenvalues
+PCA$eigenvalues
+
+# extract loadings and the most contributing features for each PC
+loadings <- PCA$loadings
+max_load_pc1 <- loadings[which.max(abs(loadings$PC1)),]$feature
+max_load_pc2 <- loadings[which.max(abs(loadings$PC2)),]$feature
+rowdata[c(max_load_pc1, max_load_pc2), 1]
+
+# distribucion de las muestras en el espacio de las dos primeras PCs
+PCA$factors_plot
+
+# peso de cada metabolito a cada PC
+PCA$loadings_plot
+
+# pesos de cada metabolito
+summary(PCA$loadings[,"PC1"])
+```
+
+
+# URL al repositorio de GitHub
+
+<https://github.com/Chirimoyia/Fuertes-Perez-Sandra-PEC1.git>
+
+# References
+
+1. Sangster, T., Major, H., Plumb, R., Wilson, A. J., & Wilson, I. D.
+(2006). A pragmatic and readily implemented quality control strategy for
+HPLC-MS and GC-MS-based metabonomic analysis. Analyst, 131(10),
+1075–1078. 
+
+2. Dunn, W. B., Broadhurst, D., Begley, P., Zelena, E.,
+Francis-McIntyre, S., Anderson, N., et al. (2011b). Procedures for
+large-scale metabolic profiling of serum and plasma using gas
+chromatography and liquid chromatography coupled to mass spectrometry.
+Nature Protocols, 6(7), 1060–1083. 
+
+3. Wei, R., Wang, J., Su, M. et al.
+Missing Value Imputation Approach for Mass Spectrometry-based
+Metabolomics Data. Sci Rep 8, 663 (2018).
+<https://doi.org/10.1038/s41598-017-19120-0>
